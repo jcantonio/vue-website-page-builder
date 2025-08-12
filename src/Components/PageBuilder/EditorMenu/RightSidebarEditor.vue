@@ -4,6 +4,7 @@ import { sharedPageBuilderStore } from '../../../stores/shared-store'
 import ClassEditor from './Editables/ClassEditor.vue'
 import StyleEditor from './Editables/StyleEditor.vue'
 import ImageEditor from './Editables/ImageEditor.vue'
+import AudioEditor from './Editables/AudioEditor.vue'
 import OpacityEditor from './Editables/OpacityEditor.vue'
 import Typography from './Editables/Typography.vue'
 import Padding from './Editables/Padding.vue'
@@ -219,6 +220,9 @@ const handleCloseGlobalPageStyles = async function () {
       <div v-show="getElement && pageBuilderService.isEditableElement(getElement)">
         <article class="pbx-mb-1">
           <ImageEditor> </ImageEditor>
+        </article>
+        <article class="pbx-mb-1">
+          <AudioEditor> </AudioEditor>
         </article>
         <article class="pbx-mb-1">
           <TipTap></TipTap>

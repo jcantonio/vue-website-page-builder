@@ -1,5 +1,6 @@
 import { LocalStorageManager } from './LocalStorageManager'
 import type {
+  AudioObject,
   BuilderResourceData,
   ComponentObject,
   ImageObject,
@@ -57,6 +58,7 @@ export class PageBuilderService {
   protected pageBuilderStateStore: ReturnType<typeof usePageBuilderStateStore>
   private getLocalStorageItemName: ComputedRef<string | null>
   private getApplyImageToSelection: ComputedRef<ImageObject>
+  private getApplyAudioToSelection: ComputedRef<AudioObject>
   private getHyberlinkEnable: ComputedRef<boolean>
   private getComponents: ComputedRef<ComponentObject[] | null>
   private getComponent: ComputedRef<ComponentObject | null>
@@ -87,6 +89,9 @@ export class PageBuilderService {
     this.getApplyImageToSelection = computed(
       () => this.pageBuilderStateStore.getApplyImageToSelection,
     )
+    this.getApplyAudioToSelection = computed(
+      () => this.pageBuilderStateStore.getApplyAudioToSelection,
+    )
     this.getLocalStorageItemName = computed(
       () => this.pageBuilderStateStore.getLocalStorageItemName,
     )
@@ -102,7 +107,6 @@ export class PageBuilderService {
     )
 
     this.NoneListernesTags = [
-      'P',
       'H1',
       'H2',
       'H3',
@@ -128,6 +132,8 @@ export class PageBuilderService {
       'U',
       'FIGURE',
       'FIGCAPTION',
+      'AUDIO',
+      'IMG',
     ]
   }
 
@@ -924,6 +930,11 @@ export class PageBuilderService {
       if (this.isEditableElement(element)) {
         const htmlElement = element as HTMLElement
 
+        // Debug: Check for P elements specifically
+        if (htmlElement.tagName === 'P' && htmlElement.textContent?.includes('Audio Player')) {
+          console.log('Found Audio Player P element, adding listeners')
+        }
+
         // If the element already has listeners, remove them to avoid duplicates.
         if (this.elementsWithListeners.has(htmlElement)) {
           const listeners = this.elementsWithListeners.get(htmlElement)
@@ -952,6 +963,105 @@ export class PageBuilderService {
         })
       }
     })
+
+    // Add special handling for audio and img elements to ensure clicks bubble up
+
+    pagebuilder.querySelectorAll('audio, img').forEach((mediaElement) => {
+      const htmlMediaElement = mediaElement as HTMLElement
+
+      // For audio elements, add a special approach to handle clicks
+      if (htmlMediaElement.tagName === 'AUDIO') {
+        // Find the parent container BEFORE we modify the DOM structure
+        // Look for the outermost container (section) or a div with meaningful classes
+        const parentContainer =
+          htmlMediaElement.closest('section') ||
+          htmlMediaElement.closest('div[class*="bg-"], div[class*="p-"], div[class*="rounded"]') ||
+          htmlMediaElement.closest('div')
+
+        if (parentContainer && this.isEditableElement(parentContainer)) {
+          const htmlParentContainer = parentContainer as HTMLElement
+
+          // Create a wrapper div around the audio element to position the overlay
+          const audioWrapper = document.createElement('div')
+          audioWrapper.style.position = 'relative'
+          audioWrapper.style.display = 'inline-block'
+          audioWrapper.style.width = '100%'
+
+          // Insert the wrapper before the audio element
+          htmlMediaElement.parentNode?.insertBefore(audioWrapper, htmlMediaElement)
+          // Move the audio element into the wrapper
+          audioWrapper.appendChild(htmlMediaElement)
+
+          // Create an overlay div that will capture clicks on the audio only
+          const overlay = document.createElement('div')
+          overlay.style.position = 'absolute'
+          overlay.style.top = '0'
+          overlay.style.left = '0'
+          overlay.style.width = '100%'
+          overlay.style.height = '100%'
+          overlay.style.backgroundColor = 'transparent' // Invisible overlay
+          overlay.style.cursor = 'pointer'
+          overlay.style.zIndex = '1000' // Higher z-index
+          overlay.style.pointerEvents = 'auto' // Ensure it captures pointer events
+          overlay.setAttribute('data-audio-overlay', 'true')
+
+          // Add the overlay to the audio wrapper
+          audioWrapper.appendChild(overlay)
+
+          // Add click listener to the overlay
+          overlay.addEventListener('click', (e: Event) => {
+            e.preventDefault()
+            e.stopPropagation()
+
+            // Directly set the element in the store instead of using handleElementClick
+            // to avoid any issues with element selection logic
+            const pagebuilder = document.querySelector('#pagebuilder')
+            if (pagebuilder) {
+              this.pageBuilderStateStore.setMenuRight(true)
+
+              const selectedElement = pagebuilder.querySelector('[selected]')
+              if (selectedElement) {
+                selectedElement.removeAttribute('selected')
+              }
+
+              htmlParentContainer.removeAttribute('hovered')
+              htmlParentContainer.setAttribute('selected', '')
+
+              this.pageBuilderStateStore.setElement(htmlParentContainer)
+            }
+          })
+        }
+      }
+
+      // Remove any existing click listener to avoid duplicates
+      htmlMediaElement.removeEventListener('click', this.handleMediaElementClick)
+
+      // Add click listener that ensures the event bubbles up to parent
+      htmlMediaElement.addEventListener('click', this.handleMediaElementClick)
+
+      // Also add a more aggressive click handler to the parent container
+      const parentContainer = htmlMediaElement.closest('section, div')
+      if (parentContainer && this.isEditableElement(parentContainer)) {
+        const htmlParentContainer = parentContainer as HTMLElement
+
+        // Add a special click handler for media containers
+        htmlParentContainer.addEventListener('click', (e: Event) => {
+          const target = e.target as HTMLElement
+          if (target.tagName === 'AUDIO' || target.tagName === 'IMG') {
+            this.handleElementClick(e, htmlParentContainer)
+          }
+        })
+      }
+    })
+  }
+
+  /**
+   * Handles click events on media elements (audio, img) to ensure they bubble up to parent containers.
+   * @private
+   */
+  private handleMediaElementClick = (): void => {
+    // Don't prevent default or stop propagation - let it bubble up to parent
+    // The parent container should have the click listener and handle selection
   }
 
   /**
@@ -1800,29 +1910,35 @@ export class PageBuilderService {
    * @returns {boolean | undefined} True if it's a valid text element, otherwise undefined.
    */
   public isSelectedElementValidText() {
-    let reachedElseStatement = false
+    if (!this.getElement.value) return false
 
-    // Get all child elements of the parentDiv
-    const childElements = this.getElement.value?.children
+    // Reject IMG, AUDIO elements or elements containing IFRAME
     if (
-      this.getElement.value?.tagName === 'IMG' ||
-      this.getElement.value?.firstElementChild?.tagName === 'IFRAME'
+      this.getElement.value.tagName === 'IMG' ||
+      this.getElement.value.tagName === 'AUDIO' ||
+      this.getElement.value.firstElementChild?.tagName === 'IFRAME'
     ) {
-      return
-    }
-    if (!childElements) {
-      return
+      return false
     }
 
+    // Get all child elements
+    const childElements = this.getElement.value.children
+
+    // If no children, it's a simple text element (like <p>Text</p>) - this should be editable
+    if (childElements.length === 0) {
+      return true
+    }
+
+    // If has children, check if any are IMG or DIV (which would make it not a simple text element)
+    let hasInvalidChildren = false
     Array.from(childElements).forEach((element) => {
-      if (element?.tagName === 'IMG' || element?.tagName === 'DIV') {
-        reachedElseStatement = false
-      } else {
-        reachedElseStatement = true
+      if (element.tagName === 'IMG' || element.tagName === 'DIV') {
+        hasInvalidChildren = true
       }
     })
 
-    return reachedElseStatement
+    // Return true if no invalid children found
+    return !hasInvalidChildren
   }
 
   /**
@@ -2233,6 +2349,24 @@ export class PageBuilderService {
       await this.handleAutoSave()
     }
   }
+  /**
+   * Applies a selected audio to the current element.
+   * @param {AudioObject} audio - The audio object to apply.
+   * @returns {Promise<void>}
+   */
+  public async applySelectedAudio(audio: AudioObject): Promise<void> {
+    this.pageBuilderStateStore.setApplyAudioToSelection(audio)
+
+    if (!this.getElement.value) return
+
+    // Only apply if an audio is staged
+    if (this.getApplyAudioToSelection.value && this.getApplyAudioToSelection.value.src) {
+      await nextTick()
+      this.pageBuilderStateStore.setBasePrimaryAudio(`${this.getApplyAudioToSelection.value.src}`)
+
+      await this.handleAutoSave()
+    }
+  }
 
   /**
    * Sets the base primary image from the currently selected element if it's an image.
@@ -2244,18 +2378,59 @@ export class PageBuilderService {
     const currentImageContainer = document.createElement('div')
     currentImageContainer.innerHTML = this.getElement.value.outerHTML
 
-    // Get all img and div within the current image container
+    // Get all img elements within the current container
     const imgElements = currentImageContainer.getElementsByTagName('img')
-    const divElements = currentImageContainer.getElementsByTagName('div')
 
-    // If exactly one img and no div, set as base primary image
-    if (imgElements.length === 1 && divElements.length === 0) {
-      this.pageBuilderStateStore.setBasePrimaryImage(imgElements[0].src)
+    // If exactly one image element is found, set as base primary image
+    if (imgElements.length === 1) {
+      // Use the image src if it exists and is not empty, otherwise use a placeholder
+      const imageSrc =
+        imgElements[0].src && imgElements[0].src.trim() !== ''
+          ? imgElements[0].src
+          : 'image-element-detected'
+      this.pageBuilderStateStore.setBasePrimaryImage(imageSrc)
       return
     }
 
     // Otherwise, clear the base primary image
     this.pageBuilderStateStore.setBasePrimaryImage(null)
+  }
+
+  /**
+   * Sets the base primary audio from the currently selected element if it's an audio.
+   * @private
+   */
+  private setBasePrimaryAudioFromSelectedElement() {
+    if (!this.getElement.value) return
+
+    // First try the selected element
+    let currentAudioContainer = document.createElement('div')
+    currentAudioContainer.innerHTML = this.getElement.value.outerHTML
+    let audioElements = currentAudioContainer.getElementsByTagName('audio')
+
+    // If no audio found in selected element, try to find the closest section and look there
+    if (audioElements.length === 0) {
+      const closestSection = this.getElement.value.closest('section')
+      if (closestSection) {
+        currentAudioContainer = document.createElement('div')
+        currentAudioContainer.innerHTML = closestSection.outerHTML
+        audioElements = currentAudioContainer.getElementsByTagName('audio')
+      }
+    }
+
+    // If exactly one audio element is found, set as base primary audio
+    if (audioElements.length === 1) {
+      // Use the audio src if it exists and is not empty, otherwise use a placeholder
+      const audioSrc =
+        audioElements[0].src && audioElements[0].src.trim() !== ''
+          ? audioElements[0].src
+          : 'audio-element-detected'
+      this.pageBuilderStateStore.setBasePrimaryAudio(audioSrc)
+      return
+    }
+
+    // Otherwise, clear the base primary audio
+    this.pageBuilderStateStore.setBasePrimaryAudio(null)
   }
 
   /**
@@ -3057,6 +3232,7 @@ export class PageBuilderService {
     // This ensures elements exist in the DOM.
     await nextTick()
     this.setBasePrimaryImageFromSelectedElement()
+    this.setBasePrimaryAudioFromSelectedElement()
     this.handleHyperlink(undefined, null, false)
     this.handleOpacity(undefined)
     this.handleBackgroundOpacity(undefined)

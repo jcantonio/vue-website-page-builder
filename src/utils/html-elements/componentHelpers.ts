@@ -55,10 +55,10 @@ const componentHelpers: ComponentHelper[] = [
     <div  id="youtube-video" class="w-full aspect-video p-4">
 
     <iframe
-    frameborder="0" 
+    frameborder="0"
     allowfullscreen
     class="w-full aspect-video"
-    src="" 
+    src=""
     allow="accelerometer; autoplay; clipboard-write;" allowfullscreen>
     </iframe>
     </div>
@@ -70,6 +70,34 @@ const componentHelpers: ComponentHelper[] = [
     icon: `
     <span class="material-symbols-outlined">
     play_circle
+    </span>
+    `,
+  },
+  {
+    html_code: `
+    <section>
+    <div class="py-4">
+    <div class="mx-auto max-w-7xl lg:px-4 px-2">
+    <div class="w-full p-4 bg-gray-50 rounded-lg">
+    <audio
+    controls
+    class="w-full"
+    src=""
+    preload="metadata">
+    Your browser does not support the audio element.
+    </audio>
+    <div class="mt-2 text-sm text-gray-600">
+    <p>Audio Player</p>
+    </div>
+    </div>
+    </div>
+    </div>
+    </section>`,
+    id: null,
+    title: 'Audio Player',
+    icon: `
+    <span class="material-symbols-outlined">
+    audio_file
     </span>
     `,
   },

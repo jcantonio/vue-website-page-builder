@@ -5,6 +5,7 @@ import type {
   ComponentObject,
   SetPushComponentsPayload,
   ImageObject,
+  AudioObject,
   PageBuilderConfig,
 } from '../types'
 
@@ -51,11 +52,14 @@ interface PageBuilderState {
   component: ComponentObject | null
   components: ComponentObject[]
   basePrimaryImage: string | null
+  basePrimaryAudio: string | null
   configPageBuilder: PageBuilderConfig | null
 
   // Media Library State
   applyImageToSelection: ImageObject
+  applyAudioToSelection: AudioObject
   currentPreviewImage: string | null
+  currentPreviewAudio: string | null
 
   // User State
   builderStarted: boolean
@@ -113,11 +117,14 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     component: null,
     components: [],
     basePrimaryImage: null,
+    basePrimaryAudio: null,
     configPageBuilder: null,
 
     // Media Library State
     applyImageToSelection: { src: '' },
+    applyAudioToSelection: { src: '' },
     currentPreviewImage: null,
+    currentPreviewAudio: null,
 
     // User State
     builderStarted: false,
@@ -256,17 +263,23 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     getBasePrimaryImage(state: PageBuilderState): string | null {
       return state.basePrimaryImage
     },
-
+    getBasePrimaryAudio(state: PageBuilderState): string | null {
+      return state.basePrimaryAudio
+    },
     getPageBuilderConfig(state: PageBuilderState): PageBuilderConfig | null {
       return state.configPageBuilder
     },
-
     getApplyImageToSelection(state: PageBuilderState): ImageObject {
       return state.applyImageToSelection
     },
-
+    getApplyAudioToSelection(state: PageBuilderState): AudioObject {
+      return state.applyAudioToSelection
+    },
     getCurrentPreviewImage(state: PageBuilderState): string | null {
       return state.currentPreviewImage
+    },
+    getCurrentPreviewAudio(state: PageBuilderState): string | null {
+      return state.currentPreviewAudio
     },
 
     // User Getters
@@ -402,6 +415,9 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     setElement(payload: HTMLElement | null): void {
       // Force reactivity by setting to null first, then the actual value
       this.element = null
+      // Reset basePrimaryImage and basePrimaryAudio when a new element is selected
+      this.basePrimaryImage = null
+      this.basePrimaryAudio = null
       nextTick(() => {
         this.element = payload
       })
@@ -442,6 +458,12 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
 
       this.basePrimaryImage = payload
     },
+    setBasePrimaryAudio(payload: string | null): void {
+      if (this.element) {
+        this.element.src = payload ?? undefined
+      }
+      this.basePrimaryAudio = payload
+    },
     setCurrentLayoutPreview(payload: string): void {
       localStorage.setItem('preview', payload)
     },
@@ -453,8 +475,16 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     setApplyImageToSelection(payload: ImageObject): void {
       this.applyImageToSelection = payload
     },
+
+    setApplyAudioToSelection(payload: AudioObject): void {
+      this.applyAudioToSelection = payload
+    },
+
     setCurrentPreviewImage(payload: string | null): void {
       this.currentPreviewImage = payload
+    },
+    setCurrentPreviewAudio(payload: string | null): void {
+      this.currentPreviewAudio = payload
     },
 
     // User Actions

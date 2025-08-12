@@ -20,6 +20,10 @@ export interface ImageObject {
   src: string
 }
 
+export interface AudioObject {
+  src: string
+}
+
 // For a single component/block passed by the developer
 export interface BuilderResourceComponent {
   html_code: string
@@ -72,6 +76,7 @@ export interface PageBuilderStateStore {
   setFontTablet: (size: string | null) => void
   setFontMobile: (size: string | null) => void
   setBasePrimaryImage: (url: string | null) => void
+  setBasePrimaryAudio: (url: string | null) => void
   setCurrentLayoutPreview: (html: string) => void
   setHyperlinkError: (error: string | null) => void
   setHyperlinkMessage: (message: string | null) => void

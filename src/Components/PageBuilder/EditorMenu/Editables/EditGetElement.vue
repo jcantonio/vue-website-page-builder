@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, inject } from 'vue'
 import DynamicModalBuilder from '../../../Modals/DynamicModalBuilder.vue'
 import TipTapInput from '../../../TipTap/TipTapInput.vue'
 import MediaLibraryModal from '../../../Modals/MediaLibraryModal.vue'
@@ -79,6 +79,10 @@ const getBasePrimaryImage = computed(() => {
   return pageBuilderStateStore.getBasePrimaryImage
 })
 
+const getBasePrimaryAudio = computed(() => {
+  return pageBuilderStateStore.getBasePrimaryAudio
+})
+
 const showMediaLibraryModal = ref(false)
 // modal content
 const titleMedia = ref('')
@@ -97,6 +101,21 @@ const handleAddImage = function () {
   descriptionMedia.value = null
   firstButtonMedia.value = translate('Close')
   secondButtonMedia.value = translate(' Select image')
+
+  // handle click
+  firstMediaButtonFunction.value = function () {
+    showMediaLibraryModal.value = false
+  }
+}
+
+const handleAddAudio = function () {
+  // open modal to true
+  showMediaLibraryModal.value = true
+
+  titleMedia.value = translate('Media Library')
+  descriptionMedia.value = null
+  firstButtonMedia.value = translate('Close')
+  secondButtonMedia.value = translate(' Select audio')
 
   // handle click
   firstMediaButtonFunction.value = function () {
@@ -321,8 +340,28 @@ const handleModalIframeSrc = function () {
       <template
         v-if="
           getElement &&
+          getComponent &&
+          getBasePrimaryAudio &&
+          !pageBuilderService.ElOrFirstChildIsIframe()
+        "
+      >
+        <div class="pbx-flex pbx-items-center pbx-justify-start pbx-gap-2 pbx-w-max">
+          <button
+            @click="handleAddAudio"
+            type="button"
+            class="pbx-h-10 pbx-w-10 pbx-flex-end pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-border-none pbx-justify-center pbx-bg-gray-200 pbx-aspect-square hover:pbx-bg-gray-100 hover:pbx-fill-white focus-visible:pbx-ring-0 pbx-text-myPrimaryDarkGrayColor"
+          >
+            <span class="material-symbols-outlined"> audio_file </span>
+          </button>
+        </div>
+      </template>
+
+      <template
+        v-if="
+          getElement &&
           getElement.nodeType === 1 &&
           !getBasePrimaryImage &&
+          !getBasePrimaryAudio &&
           !pageBuilderService.ElOrFirstChildIsIframe()
         "
       >
