@@ -18,10 +18,12 @@ export interface ComponentObject {
 
 export interface ImageObject {
   src: string
+  title: string
 }
 
 export interface AudioObject {
   src: string
+  title: string
 }
 
 // For a single component/block passed by the developer

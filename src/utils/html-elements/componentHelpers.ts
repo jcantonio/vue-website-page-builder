@@ -79,15 +79,16 @@ const componentHelpers: ComponentHelper[] = [
     <div class="py-4">
     <div class="mx-auto max-w-7xl lg:px-4 px-2">
     <div class="w-full p-4 bg-gray-50 rounded-lg">
-    <audio
+    <audio controlsList="nodownload"
     controls
     class="w-full"
     src=""
+    crossorigin="anonymous"
     preload="metadata">
     Your browser does not support the audio element.
     </audio>
     <div class="mt-2 text-sm text-gray-600">
-    <p>Audio Player</p>
+    <p data-audio-title>Audio Player</p>
     </div>
     </div>
     </div>
