@@ -40,6 +40,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showSaveButton: {
+    type: Boolean,
+    default: true,
+  },
+  publishButtonText: {
+    type: String,
+    default: 'Publish',
+  },
 })
 
 const { translate, loadTranslations } = useTranslations()
@@ -544,38 +552,40 @@ onMounted(async () => {
       >
         <div class="pbx-flex pbx-items-center pbx-justify-center">
           <!-- Save Start -->
-          <button
-            class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
-            @click.stop="
-              async () => {
-                await pageBuilderService.clearHtmlSelection()
-                await pageBuilderService.handleManualSave()
-              }
-            "
-            type="button"
-            :disabled="getIsSaving"
-          >
-            <div
-              v-if="!getIsSaving"
-              class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+          <template v-if="showSaveButton">
+            <button
+              class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
+              @click.stop="
+                async () => {
+                  await pageBuilderService.clearHtmlSelection()
+                  await pageBuilderService.handleManualSave()
+                }
+              "
+              type="button"
+              :disabled="getIsSaving"
             >
-              <span class="material-symbols-outlined">save</span>
-            </div>
-            <div
-              v-if="getIsSaving"
-              class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
-            >
-              <span class="pbx-relative pbx-flex pbx-size-3">
-                <span
-                  class="pbx-absolute pbx-inline-flex pbx-h-full pbx-w-full pbx-animate-ping pbx-rounded-full pbx-bg-gray-400 pbx-opacity-75"
-                ></span>
-                <span
-                  class="pbx-relative pbx-inline-flex pbx-size-3 pbx-rounded-full pbx-bg-green-200"
-                ></span>
-              </span>
-            </div>
-            <div>{{ translate('Save') }}</div>
-          </button>
+              <div
+                v-if="!getIsSaving"
+                class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+              >
+                <span class="material-symbols-outlined">save</span>
+              </div>
+              <div
+                v-if="getIsSaving"
+                class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+              >
+                <span class="pbx-relative pbx-flex pbx-size-3">
+                  <span
+                    class="pbx-absolute pbx-inline-flex pbx-h-full pbx-w-full pbx-animate-ping pbx-rounded-full pbx-bg-gray-400 pbx-opacity-75"
+                  ></span>
+                  <span
+                    class="pbx-relative pbx-inline-flex pbx-size-3 pbx-rounded-full pbx-bg-green-200"
+                  ></span>
+                </span>
+              </div>
+              <div>{{ translate('Save') }}</div>
+            </button>
+          </template>
           <!-- Save End -->
 
           <!-- Restore Start -->
@@ -735,7 +745,7 @@ onMounted(async () => {
                 }
               "
             >
-              {{ translate('Publish') }}
+              {{ translate(publishButtonText) }}
             </button>
           </div>
         </template>
