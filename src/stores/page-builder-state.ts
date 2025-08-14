@@ -451,16 +451,40 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
       }
     },
 
-    setBasePrimaryImage(payload: string | null): void {
+    setBasePrimaryImage(payload: string): void {
       if (this.element) {
-        this.element.src = payload ?? undefined
+        if (this.element.tagName === 'IMG') {
+          this.element.src = payload
+        } else {
+          const imgElement = this.element.querySelector('img')
+          if (imgElement) {
+            imgElement.src = payload
+          }
+        }
       }
 
       this.basePrimaryImage = payload
     },
-    setBasePrimaryAudio(payload: string | null): void {
+    setBasePrimaryAudio(payload: string): void {
       if (this.element) {
-        this.element.src = payload ?? undefined
+        // If the selected element is the audio tag, set it directly.
+        const selectedEl = this.element as unknown as HTMLElement
+        if (selectedEl.tagName === 'AUDIO') {
+          // Use property when available to reflect immediately in DOM
+          ;(selectedEl as unknown as HTMLAudioElement).src = payload ?? ''
+          try {
+            ;(selectedEl as unknown as HTMLAudioElement).load?.()
+          } catch {}
+        } else {
+          // Otherwise, find a descendant <audio> within the selected container
+          const audioEl = selectedEl.querySelector('audio') as HTMLAudioElement | null
+          if (audioEl) {
+            audioEl.src = payload
+            try {
+              audioEl.load?.()
+            } catch {}
+          }
+        }
       }
       this.basePrimaryAudio = payload
     },
