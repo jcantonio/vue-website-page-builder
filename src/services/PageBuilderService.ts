@@ -965,14 +965,15 @@ export class PageBuilderService {
     })
 
     // Add special handling for audio and img elements to ensure clicks bubble up
-
     pagebuilder.querySelectorAll('audio, img').forEach((mediaElement) => {
       const htmlMediaElement = mediaElement as HTMLElement
 
-      // For audio elements, add a special approach to handle clicks
+      // Remove any existing click listener to avoid duplicates
+      htmlMediaElement.removeEventListener('click', this.handleMediaElementClick)
+
+      // For audio elements, intercept clicks and redirect them to the parent
       if (htmlMediaElement.tagName === 'AUDIO') {
-        // Find the parent container BEFORE we modify the DOM structure
-        // Look for the outermost container (section) or a div with meaningful classes
+        // Find the parent container that should be selectable
         const parentContainer =
           htmlMediaElement.closest('section') ||
           htmlMediaElement.closest('div[class*="bg-"], div[class*="p-"], div[class*="rounded"]') ||
@@ -981,81 +982,38 @@ export class PageBuilderService {
         if (parentContainer && this.isEditableElement(parentContainer)) {
           const htmlParentContainer = parentContainer as HTMLElement
 
-          // Create a wrapper div around the audio element to position the overlay
-          const audioWrapper = document.createElement('div')
-          audioWrapper.style.position = 'relative'
-          audioWrapper.style.display = 'inline-block'
-          audioWrapper.style.width = '100%'
-
-          // Insert the wrapper before the audio element
-          htmlMediaElement.parentNode?.insertBefore(audioWrapper, htmlMediaElement)
-          // Move the audio element into the wrapper
-          audioWrapper.appendChild(htmlMediaElement)
-
-          // Create an overlay div that will capture clicks on the audio only
-          const overlay = document.createElement('div')
-          overlay.style.position = 'absolute'
-          overlay.style.top = '0'
-          overlay.style.left = '0'
-          overlay.style.width = '100%'
-          overlay.style.height = '100%'
-          overlay.style.backgroundColor = 'transparent' // Invisible overlay
-          overlay.style.cursor = 'pointer'
-          overlay.style.zIndex = '1000' // Higher z-index
-          overlay.style.pointerEvents = 'auto' // Ensure it captures pointer events
-          overlay.setAttribute('data-audio-overlay', 'true')
-
-          // Add the overlay to the audio wrapper
-          audioWrapper.appendChild(overlay)
-
-          // Add click listener to the overlay
-          overlay.addEventListener('click', (e: Event) => {
+          // Add click listener directly to the audio element to intercept clicks
+          const audioClickListener = (e: Event) => {
             e.preventDefault()
             e.stopPropagation()
 
-            // Directly set the element in the store instead of using handleElementClick
-            // to avoid any issues with element selection logic
-            const pagebuilder = document.querySelector('#pagebuilder')
-            if (pagebuilder) {
-              this.pageBuilderStateStore.setMenuRight(true)
+            // Simulate a click on the parent container instead
+            this.handleElementClick(e, htmlParentContainer)
+          }
 
-              const selectedElement = pagebuilder.querySelector('[selected]')
-              if (selectedElement) {
-                selectedElement.removeAttribute('selected')
-              }
+          // Add the listener directly to the audio element
+          htmlMediaElement.addEventListener('click', audioClickListener)
+        }
+      } else {
+        // For img elements, use the existing approach
+        htmlMediaElement.addEventListener('click', this.handleMediaElementClick)
 
-              htmlParentContainer.removeAttribute('hovered')
-              htmlParentContainer.setAttribute('selected', '')
+        // Also add a click handler to the parent container for images
+        const parentContainer = htmlMediaElement.closest('section, div')
+        if (parentContainer && this.isEditableElement(parentContainer)) {
+          const htmlParentContainer = parentContainer as HTMLElement
 
-              this.pageBuilderStateStore.setElement(htmlParentContainer)
+          // Add a special click handler for image containers
+          htmlParentContainer.addEventListener('click', (e: Event) => {
+            const target = e.target as HTMLElement
+            if (target.tagName === 'IMG') {
+              this.handleElementClick(e, htmlParentContainer)
             }
           })
         }
       }
-
-      // Remove any existing click listener to avoid duplicates
-      htmlMediaElement.removeEventListener('click', this.handleMediaElementClick)
-
-      // Add click listener that ensures the event bubbles up to parent
-      htmlMediaElement.addEventListener('click', this.handleMediaElementClick)
-
-      // Also add a more aggressive click handler to the parent container
-      const parentContainer = htmlMediaElement.closest('section, div')
-      if (parentContainer && this.isEditableElement(parentContainer)) {
-        const htmlParentContainer = parentContainer as HTMLElement
-
-        // Add a special click handler for media containers
-        htmlParentContainer.addEventListener('click', (e: Event) => {
-          const target = e.target as HTMLElement
-          if (target.tagName === 'AUDIO' || target.tagName === 'IMG') {
-            this.handleElementClick(e, htmlParentContainer)
-          }
-        })
-      }
     })
-  }
-
-  /**
+  } /**
    * Handles click events on media elements (audio, img) to ensure they bubble up to parent containers.
    * @private
    */
