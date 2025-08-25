@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { onMounted, computed, ref, watch, provide } from 'vue'
 import ModalBuilder from '../Components/Modals/ModalBuilder.vue'
 import Preview from './Preview.vue'
@@ -41,6 +41,10 @@ const props = defineProps({
     default: false,
   },
   showSaveButton: {
+    type: Boolean,
+    default: true,
+  },
+  showDownloadButton: {
     type: Boolean,
     default: true,
   },
@@ -170,6 +174,24 @@ const handleAddComponent = async function () {
   }
 
   // end modal
+}
+
+const handleDownloadHTML = async function () {
+  const html = pageBuilderService.getSavedPageHtml()
+  generateHTML('downloaded_html.html', html)
+}
+
+const generateHTML = function (filename, html) {
+  const element = document.createElement('a')
+  element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html))
+  element.setAttribute('download', filename)
+
+  element.style.display = 'none'
+  document.body.appendChild(element)
+
+  element.click()
+
+  document.body.removeChild(element)
 }
 
 const getElement = computed(() => {
@@ -732,8 +754,32 @@ onMounted(async () => {
         >
           <ToolbarOption></ToolbarOption>
         </div>
-        <!-- Options # Start -->
+        <!-- Export html as file -->
+        <div v-if="showDownloadButton" class="pbx-flex pbx-items-center pbx-py-2 pbx-w-full">
+          <button
+            class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
+            @click.stop="
+              async () => {
+                handleDownloadHTML()
+              }
+            "
+            type="button"
+          >
+            <div
+              class="pbx-h-10 pbx-w-10 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-border-none pbx-justify-center pbx-bg-gray-50 pbx-aspect-square hover:pbx-bg-myPrimaryLinkColor focus-visible:pbx-ring-0 pbx-text-black hover:pbx-text-white"
+            >
+              <span class="material-symbols-outlined"> download </span>
+            </div>
+            <div class="lg:pbx-block pbx-hidden">
+              <span> {{ translate('Download HTML') }} </span>
+            </div>
+            <div class="lg:pbx-hidden pbx-block">
+              <span> {{ translate('Download') }} </span>
+            </div>
+          </button>
+        </div>
 
+        <!-- Options # Start -->
         <!-- Publish buttons start -->
         <template v-if="showPublishButton">
           <div class="pbx-flex-1 pbx-ml-2">
