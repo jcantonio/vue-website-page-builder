@@ -456,10 +456,14 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
         if (this.element.tagName === 'IMG') {
           this.element.src = payload
         } else {
-          const imgElement = this.element.querySelector('img')
-          if (imgElement) {
-            imgElement.src = payload
+          // Check if there are multiple images in the element
+          const imgElements = this.element.querySelectorAll('img')
+          if (imgElements.length === 1) {
+            // Only modify the image if there's exactly one image
+            imgElements[0].src = payload
           }
+          // If there are multiple images, don't modify any of them
+          // This prevents the first image from being changed when clicking on multi-image components
         }
       }
 
