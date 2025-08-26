@@ -48,9 +48,17 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showSettingsButton: {
+    type: Boolean,
+    default: true,
+  },
   publishButtonText: {
     type: String,
     default: 'Publish',
+  },
+  settingsButtonText: {
+    type: String,
+    default: 'Settings',
   },
 })
 
@@ -69,7 +77,11 @@ provide('internalPinia', internalPinia)
 provide('CustomMediaComponent', props.CustomMediaLibraryComponent)
 provide('CustomBuilderComponents', props.CustomBuilderComponents)
 
-const emit = defineEmits(['handleClosePageBuilder', 'handlePublishPageBuilder'])
+const emit = defineEmits([
+  'handleClosePageBuilder',
+  'handlePublishPageBuilder',
+  'handleSettingsPageBuilder',
+])
 
 const closePageBuilder = function () {
   emit('handleClosePageBuilder')
@@ -79,6 +91,10 @@ const closePublish = async function () {
   await pageBuilderService.handleManualSave()
   pageBuilderStateStore.setIsLoadingGlobal(false)
   emit('handlePublishPageBuilder')
+}
+
+const closeSettings = function () {
+  emit('handleSettingsPageBuilder')
 }
 
 // Provide modal close function for custom components
@@ -562,6 +578,30 @@ onMounted(async () => {
       </template>
       <!-- Logo # end -->
 
+      <!-- Settings -->
+      <template v-if="showSettingsButton">
+        <button
+          class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
+          @click.stop="
+            async () => {
+              closeSettings()
+            }
+          "
+          type="button"
+        >
+          <div
+            class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+          >
+            <span class="material-symbols-outlined"> {{ settingsButtonText }} </span>
+          </div>
+          <div class="lg:pbx-block pbx-hidden">
+            <span> {{ translate('Settings') }} </span>
+          </div>
+          <div class="lg:pbx-hidden pbx-block">
+            <span> {{ translate('Settings') }} </span>
+          </div>
+        </button>
+      </template>
       <UndoRedo @toolbar-hide-request="hideToolbar"></UndoRedo>
 
       <div
@@ -755,7 +795,7 @@ onMounted(async () => {
           <ToolbarOption></ToolbarOption>
         </div>
         <!-- Export html as file -->
-        <div v-if="showDownloadButton" class="pbx-flex pbx-items-center pbx-py-2 pbx-w-full">
+        <div v-if="showDownloadButton">
           <button
             class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
             @click.stop="
@@ -765,16 +805,8 @@ onMounted(async () => {
             "
             type="button"
           >
-            <div
-              class="pbx-h-10 pbx-w-10 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-border-none pbx-justify-center pbx-bg-gray-50 pbx-aspect-square hover:pbx-bg-myPrimaryLinkColor focus-visible:pbx-ring-0 pbx-text-black hover:pbx-text-white"
-            >
+            <div>
               <span class="material-symbols-outlined"> download </span>
-            </div>
-            <div class="lg:pbx-block pbx-hidden">
-              <span> {{ translate('Download HTML') }} </span>
-            </div>
-            <div class="lg:pbx-hidden pbx-block">
-              <span> {{ translate('Download') }} </span>
             </div>
           </button>
         </div>
@@ -796,7 +828,6 @@ onMounted(async () => {
           </div>
         </template>
         <!-- Publish buttons end -->
-
         <template
           v-if="
             getPageBuilderConfig &&
