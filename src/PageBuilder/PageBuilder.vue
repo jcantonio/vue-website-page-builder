@@ -580,27 +580,29 @@ onMounted(async () => {
 
       <!-- Settings -->
       <template v-if="showSettingsButton">
-        <button
-          class="pbx-mySecondaryButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
-          @click.stop="
-            async () => {
-              closeSettings()
-            }
-          "
-          type="button"
-        >
-          <div
-            class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+        <div class="pbx-pl-2">
+          <button
+            class="pbx-myButton pbx-h-6 pbx-flex pbx-gap-2 pbx-mr-2"
+            @click.stop="
+              async () => {
+                closeSettings()
+              }
+            "
+            type="button"
           >
-            <span class="material-symbols-outlined"> settings </span>
-          </div>
-          <div class="lg:pbx-block pbx-hidden">
-            <span> {{ settingsButtonText }} </span>
-          </div>
-          <div class="lg:pbx-hidden pbx-block">
-            <span> {{ settingsButtonText }} </span>
-          </div>
-        </button>
+            <div
+              class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
+            >
+              <span class="material-symbols-outlined pbx-text-gray-400"> settings </span>
+            </div>
+            <div class="lg:pbx-block pbx-hidden pbx-text-gray-400">
+              <span> {{ settingsButtonText }} </span>
+            </div>
+            <div class="lg:pbx-hidden pbx-block pbx-text-gray-400">
+              <span> {{ settingsButtonText }} </span>
+            </div>
+          </button>
+        </div>
       </template>
       <UndoRedo @toolbar-hide-request="hideToolbar"></UndoRedo>
 
