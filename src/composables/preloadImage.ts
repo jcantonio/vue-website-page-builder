@@ -4,5 +4,6 @@ export function preloadImage(url: string) {
     img.onload = resolve
     img.onerror = reject
     img.src = url
+    img.crossOrigin = 'anonymous'
   })
 }

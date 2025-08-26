@@ -79,6 +79,7 @@ const loadingImage = async function (imageURL) {
         :src="getBasePrimaryImage"
         @click="handleAddImage"
         alt="image"
+        crossorigin="anonymous"
       />
     </div>
     <MediaLibraryModal
