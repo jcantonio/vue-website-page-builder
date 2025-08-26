@@ -592,13 +592,13 @@ onMounted(async () => {
           <div
             class="pbx-h-10 pbx-w-4 pbx-cursor-pointer pbx-rounded-full pbx-flex pbx-items-center pbx-justify-center"
           >
-            <span class="material-symbols-outlined"> {{ settingsButtonText }} </span>
+            <span class="material-symbols-outlined"> settings </span>
           </div>
           <div class="lg:pbx-block pbx-hidden">
-            <span> {{ translate('Settings') }} </span>
+            <span> {{ settingsButtonText }} </span>
           </div>
           <div class="lg:pbx-hidden pbx-block">
-            <span> {{ translate('Settings') }} </span>
+            <span> {{ settingsButtonText }} </span>
           </div>
         </button>
       </template>
